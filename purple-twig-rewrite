@@ -18,7 +18,7 @@
         </ul>
         {% if helpcheck %}
         <div class="pull-right float-right">
-          <a href="{{ helplink }}" rel=”nofollow” target="_blank" id="button-pts-help" class="btn"><img src="{{ helpimage }}" alt="Help" width="85" height="43"></a>
+          <a href="{{ helplink }}" rel="nofollow" target="_blank" id="button-pts-help" class="btn"><img src="{{ helpimage }}" alt="Help" width="85" height="43"></a>
         </div>
         {% endif %}
       </div>
@@ -32,7 +32,7 @@
         <div class="panel panel-default">
           <div class="panel-heading">
             <h4 class="panel-title">
-              <a data-toggle="collapse" data-parent="#productAccordion" href="#acc-general" aria-expanded="true">{{ text_general ?: 'General' }}</a>
+              <a data-toggle="collapse" data-parent="#productAccordion" href="#acc-general" aria-expanded="true">{{ text_general|default('General') }}</a>
             </h4>
           </div>
           <div id="acc-general" class="panel-collapse collapse in">
@@ -73,7 +73,7 @@
                         <img class="gpt-icon">
                         <textarea data-lang-id="{{ language.language_id }}" data-control="input-description" class="form-control gpt-call" id="input-query-description-{{ language.language_id }}" placeholder="{{ 'write a product description' }}" style="height: 45px;padding: 12px 70px 10px 50px;resize: none;overflow: hidden;"></textarea>
                         <button type="button" data-lang-id="{{ language.language_id }}" data-control="input-query-description" class="btn btn-light btn-enter" id="btn-enter-description-{{ language.language_id }}">{{ 'Enter' }}</button>
-                        <small>{{ text_shift_enter_new_line ?: 'Press Shift + Enter for New Line' }}</small>
+                        <small>{{ text_shift_enter_new_line|default('Press Shift + Enter for New Line') }}</small>
                         <span class="float-right">
                           <div class="form-check-inline">
                             <label class="form-check-label"><input type="radio" class="form-check-input" name="radio-input-description{{ language.language_id }}" value="p">{{ 'Prepend' }}</label>
@@ -196,7 +196,7 @@
 
               <!-- Categories select -->
               <div class="pts-form-group row">
-                <label class="pts-col-sm-2 col-form-label" for="input-category">{{ entry_categoryy ?: entry_category }}</label>
+                <label class="pts-col-sm-2 col-form-label" for="input-category">{{ entry_categoryy|default(entry_category) }}</label>
                 <div class="pts-col-sm-10">
                   <select name="product_category[]" id="input-category" class="form-control">
                     <option value="">{{ entry_select_category }}</option>
@@ -231,7 +231,7 @@
         <!-- Second Tab: SEO (closed) -->
         <div class="panel panel-default">
           <div class="panel-heading">
-            <h4 class="panel-title"><a class="collapsed" data-toggle="collapse" data-parent="#productAccordion" href="#acc-seo">{{ text_seo ?: 'SEO Meta Descriptions' }}</a></h4>
+            <h4 class="panel-title"><a class="collapsed" data-toggle="collapse" data-parent="#productAccordion" href="#acc-seo">{{ text_seo|default('SEO Meta Descriptions') }}</a></h4>
           </div>
           <div id="acc-seo" class="panel-collapse collapse">
             <div class="panel-body">
@@ -251,7 +251,7 @@
                     <img class="gpt-icon">
                     <textarea data-lang-id="{{ language.language_id }}" data-control="input-meta-description" class="form-control gpt-call" id="input-query-meta-description-{{ language.language_id }}" placeholder="{{ 'write a meta description' }}" style="height: 45px;padding: 12px 70px 10px 50px;resize: none;overflow: hidden;"></textarea>
                     <button type="button" data-lang-id="{{ language.language_id }}" data-control="input-query-meta-description" class="btn btn-light btn-enter" id="btn-enter-meta-description-{{ language.language_id }}">{{ 'Enter' }}</button>
-                    <small>{{ text_shift_enter_new_line ?: 'Press Shift + Enter for New Line' }}</small>
+                    <small>{{ text_shift_enter_new_line|default('Press Shift + Enter for New Line') }}</small>
                     <span class="float-end">
                       <div class="form-check-inline">
                         <label class="form-check-label"><input type="radio" class="form-check-input" name="radio-input-meta-description{{ language.language_id }}" value="p">{{ 'Prepend' }}</label>
@@ -300,7 +300,7 @@
         <!-- Third Tab: Options (closed) -->
         <div class="panel panel-default">
           <div class="panel-heading">
-            <h4 class="panel-title"><a class="collapsed" data-toggle="collapse" data-parent="#productAccordion" href="#acc-options">{{ tab_option ?: 'Options' }}</a></h4>
+            <h4 class="panel-title"><a class="collapsed" data-toggle="collapse" data-parent="#productAccordion" href="#acc-options">{{ tab_option|default('Options') }}</a></h4>
           </div>
           <div id="acc-options" class="panel-collapse collapse">
             <div class="panel-body">
