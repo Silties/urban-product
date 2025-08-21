@@ -722,7 +722,7 @@
 
 <!-- Minimal helpers recreated for dynamic rows -->
 <script type="text/javascript"><!--
-  var image_row = {{ image_row }};
+  var image_row = {{ image_row|default(0) }};
   function addImage() {
     html  = '<tr id="image-pts-row' + image_row + '">';
     html += '  <td class="pts-text-left"><a href="" id="thumb-image' + image_row + '"data-toggle="image" class="img-thumbnail"><img src="{{ placeholder }}" alt="" title="" data-placeholder="{{ placeholder }}" /></a><input type="hidden" name="product_image[' + image_row + '][image]" value="" id="input-image' + image_row + '" /></td>';
@@ -735,7 +735,7 @@
 //--></script>
 
 <script type="text/javascript"><!--
-  var attribute_row = {{ attribute_row }};
+  var attribute_row = {{ attribute_row|default(0) }};
   function addAttribute() {
     html  = '<tr id="attribute-pts-row' + attribute_row + '">';
     html += '  <td class="pts-text-left ptsc-product-width"><input type="text" name="product_attribute[' + attribute_row + '][name]" value="" placeholder="{{ entry_attribute }}" class="pts-form-control" /><input type="hidden" name="product_attribute[' + attribute_row + '][attribute_id]" value="" /></td>';
@@ -754,7 +754,7 @@
 //--></script>
 
 <script type="text/javascript"><!--
-  var discount_row = {{ discount_row }};
+  var discount_row = {{ discount_row|default(0) }};
   function addDiscount() {
     html  = '<tr id="discount-pts-row' + discount_row + '">';
     html += '  <td class="pts-text-left"><select name="product_discount[' + discount_row + '][customer_group_id]" class="pts-form-control">';
@@ -775,7 +775,7 @@
 //--></script>
 
 <script type="text/javascript"><!--
-  var special_row = {{ special_row }};
+  var special_row = {{ special_row|default(0) }};
   function addSpecial() {
     html  = '<tr id="special-pts-row' + special_row + '">';
     html += '  <td class="pts-text-left"><select name="product_special[' + special_row + '][customer_group_id]" class="pts-form-control">';
@@ -834,3 +834,5 @@
 <style>
   .sticky-save-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 1040; background: #fff; border-top: 1px solid #ddd; padding: 10px; }
 </style>
+
+{{ footer }}
