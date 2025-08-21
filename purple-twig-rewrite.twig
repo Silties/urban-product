@@ -1,0 +1,838 @@
+{{ header }}
+<div class="container-fluid">
+  {{ column_left }}
+  <div id="content" class="pts-col-sm-9 col-sm-9 pts-col-md-9 col-md-9 pts-col-lg-10 col-lg-10 pts-col-xs-12 col-xs-12">
+    <div class="page-header">
+      {% if error_warning %}
+      <div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> {{ error_warning }}</div>
+      {% endif %}
+      {% if success %}
+      <div class="alert pts-alert-success"><i class="fa fa-check-circle"></i> {{ success }}</div>
+      {% endif %}
+      <div class="container-fluid">
+        <h1>{{ heading_title }}</h1>
+        <ul class="breadcrumb">
+          {% for breadcrumb in breadcrumbs %}
+          <li><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>
+          {% endfor %}
+        </ul>
+        {% if helpcheck %}
+        <div class="pull-right float-right">
+          <a href="{{ helplink }}" rel="nofollow" target="_blank" id="button-pts-help" class="btn"><img src="{{ helpimage }}" alt="Help" width="85" height="43"></a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <form action="{{ action }}" method="post" enctype="multipart/form-data" id="form-product" class="pts-form-horizontal">
+
+      <div class="panel-group" id="productAccordion">
+
+        <!-- First Tab: General (open) -->
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h4 class="panel-title">
+              <a data-toggle="collapse" data-parent="#productAccordion" href="#acc-general" aria-expanded="true">{{ text_general|default('General') }}</a>
+            </h4>
+          </div>
+          <div id="acc-general" class="panel-collapse collapse in">
+            <div class="panel-body">
+              <input type="hidden" name="seller_name" value="{{ seller_name }}">
+
+              <!-- Product Name, Description with AI -->
+              <ul class="pts-nav pts-nav-tabs nav nav-tabs" id="language">
+                {% for language in languages %}
+                <li class="nav-item">
+                  <a href="#language{{ language.language_id }}" data-toggle="tab" class="nav-link">
+                    <img class="pts-lan-image" src="catalog/language/{{ language.code }}/{{ language.code }}.png" title="{{ language.name }}" /> {{ language.name }}
+                  </a>
+                </li>
+                {% endfor %}
+              </ul>
+
+              <div class="pts-tab-content">
+                {% for language in languages %}
+                <div class="pts-tab-pane" id="language{{ language.language_id }}">
+                  <!-- Product Name -->
+                  <div class="pts-form-group row required pts_show">
+                    <label class="pts-col-sm-2 col-form-label" for="input-name{{ language.language_id }}">{{ entry_name }}</label>
+                    <div class="pts-col-sm-10">
+                      <input type="text" name="product_description[{{ language.language_id }}][name]" value="{{ product_description[language.language_id] ? product_description[language.language_id].name }}" placeholder="{{ entry_name }}" id="input-name{{ language.language_id }}" class="pts-form-control" />
+                      {% if error_name[language.language_id] %}
+                      <div class="text-danger">{{ error_name[language.language_id] }}</div>
+                      {% endif %}
+                    </div>
+                  </div>
+
+                  <!-- Description + AI -->
+                  <div class="pts-form-group row">
+                    <label class="pts-col-sm-2 col-form-label" for="input-description{{ language.language_id }}">{{ entry_description }}</label>
+                    <div class="pts-col-sm-10">
+                      {% if gpt_completion_status %}
+                      <div style="margin-bottom: 5px; position: relative;">
+                        <img class="gpt-icon">
+                        <textarea data-lang-id="{{ language.language_id }}" data-control="input-description" class="form-control gpt-call" id="input-query-description-{{ language.language_id }}" placeholder="{{ 'write a product description' }}" style="height: 45px;padding: 12px 70px 10px 50px;resize: none;overflow: hidden;"></textarea>
+                        <button type="button" data-lang-id="{{ language.language_id }}" data-control="input-query-description" class="btn btn-light btn-enter" id="btn-enter-description-{{ language.language_id }}">{{ 'Enter' }}</button>
+                        <small>{{ text_shift_enter_new_line|default('Press Shift + Enter for New Line') }}</small>
+                        <span class="float-right">
+                          <div class="form-check-inline">
+                            <label class="form-check-label"><input type="radio" class="form-check-input" name="radio-input-description{{ language.language_id }}" value="p">{{ 'Prepend' }}</label>
+                            <label class="form-check-label"><input type="radio" class="form-check-input" name="radio-input-description{{ language.language_id }}" value="a">{{ 'Append' }}</label>
+                            <label class="form-check-label"><input type="radio" class="form-check-input" name="radio-input-description{{ language.language_id }}" checked value="r">{{ 'Replace' }}</label>
+                          </div>
+                        </span>
+                      </div>
+                      <div id="loader" class="loader" style="display:none;"><img src="../image/catalog/spinner.gif"></div>
+                      {% endif %}
+                      <textarea name="product_description[{{ language.language_id }}][description]" placeholder="{{ entry_description }}" class="pts-form-control summernote" data-lang="{{ summernote }}" id="input-description{{ language.language_id }}">{{ product_description[language.language_id] ? product_description[language.language_id].description }}</textarea>
+                    </div>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+
+              <!-- Images -->
+              <h4 style="margin-top: 20px;">{{ tab_image }}</h4>
+              <div class="pts-table-responsive">
+                <table class="pts-table pts-table-striped pts-table-bordered pts-table-hover pts-left-icon">
+                  <thead>
+                    <tr>
+                      <td class="pts-text-left">{{ entry_image }}</td>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td class="pts-text-left">
+                        <a href="" id="thumb-image" data-toggle="image" class="img-thumbnail"><img src="{{ thumb }}" alt="" title="" data-placeholder="{{ placeholder }}" /></a>
+                        <input type="hidden" name="image" value="{{ image }}" id="input-image" />
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="pts-table-responsive">
+                <table id="images" class="pts-table pts-table-striped pts-table-bordered pts-table-hover pts-left-icon">
+                  <thead>
+                    <tr>
+                      <td class="pts-text-left">{{ entry_additional_image }}</td>
+                      <td class="pts-text-right">{{ entry_sort_order }}</td>
+                      <td></td>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% set image_row = 0 %}
+                    {% for product_image in product_images %}
+                    <tr id="image-pts-row{{ image_row }}">
+                      <td class="pts-text-left">
+                        <a href="" id="thumb-image{{ image_row }}" data-toggle="image" class="img-thumbnail"><img src="{{ product_image.thumb }}" alt="" title="" data-placeholder="{{ placeholder }}" /></a>
+                        <input type="hidden" name="product_image[{{ image_row }}][image]" value="{{ product_image.image }}" id="input-image{{ image_row }}" />
+                      </td>
+                      <td class="pts-text-right"><input type="text" name="product_image[{{ image_row }}][sort_order]" value="{{ product_image.sort_order }}" placeholder="{{ entry_sort_order }}" class="pts-form-control" /></td>
+                      <td class="pts-text-left"><button type="button" onclick="$('#image-pts-row{{ image_row }}').remove();" data-toggle="tooltip" title="{{ button_remove }}" class="pts-btn pts-btn-danger"><i class="fa fa-minus-circle"></i></button></td>
+                    </tr>
+                    {% set image_row = image_row + 1 %}
+                    {% endfor %}
+                  </tbody>
+                  <tfoot>
+                    <tr>
+                      <td colspan="2"></td>
+                      <td class="pts-text-left"><button type="button" onclick="addImage();" data-toggle="tooltip" title="{{ button_image_add }}" class="btn btn-primary"><i class="fa fa-plus-circle"></i></button></td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+
+              <!-- Pricing and Inventory -->
+              <div class="pts-form-group row" style="margin-top: 20px;">
+                <label class="pts-col-sm-2 col-form-label" for="input-price">{{ entry_price }}</label>
+                <div class="pts-col-sm-10">
+                  <input type="text" name="price" value="{{ price }}" placeholder="{{ entry_price }}" id="input-price" class="pts-form-control" />
+                </div>
+              </div>
+
+              <div class="pts-form-group row">
+                <label class="pts-col-sm-2 col-form-label" for="input-pts-quantity">{{ entry_quantity }}</label>
+                <div class="pts-col-sm-10">
+                  <input type="text" name="quantity" value="{{ quantity }}" placeholder="{{ entry_quantity }}" id="input-pts-quantity" class="pts-form-control" />
+                </div>
+              </div>
+
+              <div class="pts-form-group row">
+                <label class="pts-col-sm-2 col-form-label" for="input-minimum"><span data-toggle="tooltip" title="{{ help_minimum }}">{{ entry_minimum }}</span></label>
+                <div class="pts-col-sm-10">
+                  <input type="text" name="minimum" value="{{ minimum }}" placeholder="{{ entry_minimum }}" id="input-minimum" class="pts-form-control" />
+                </div>
+              </div>
+
+              <!-- Requires Shipping and charges -->
+              <div class="pts-form-group row">
+                <label class="pts-col-sm-2 col-form-label">{{ entry_shipping }}</label>
+                <div class="pts-col-sm-10 ptsradioinp">
+                  <label class="radio-inline">{% if shipping %}<input type="radio" name="shipping" value="1" checked="checked" />{{ text_yes }}{% else %}<input type="radio" name="shipping" value="1" />{{ text_yes }}{% endif %}</label>
+                  <label class="radio-inline">{% if not shipping %}<input type="radio" name="shipping" value="0" checked="checked" />{{ text_no }}{% else %}<input type="radio" name="shipping" value="0" />{{ text_no }}{% endif %}</label>
+                </div>
+              </div>
+
+              <div class="pts-form-group row">
+                <label class="pts-col-sm-2 col-form-label" for="input-pts_shipping_charge">{{ text_shipping_charge }}</label>
+                <div class="pts-col-sm-10">
+                  <input type="text" name="pts_shipping_charge" value="{{ pts_shipping_charge }}" placeholder="{{ text_shipping_charge }}" id="input-pts_shipping_charge" class="pts-form-control"/>
+                </div>
+              </div>
+
+              <div class="pts-form-group row">
+                <label class="pts-col-sm-2 col-form-label" for="input-dispatch-order-days">{{ 'Dispatch Order Days' }}</label>
+                <div class="pts-col-sm-10">
+                  <input type="text" name="dispatch_days" value="{{ dispatch_days }}" placeholder="{{ 'Dispatch Order Days' }}" id="input-dispatch-order-days" class="pts-form-control"/>
+                </div>
+              </div>
+
+              <div class="pts-form-group row">
+                <label class="pts-col-sm-2 col-form-label" for="input-delivery-days">{{ 'Delivery Days' }}</label>
+                <div class="pts-col-sm-10">
+                  <input type="text" name="delivery_days" value="{{ delivery_days }}" placeholder="{{ 'Delivery Days' }}" id="input-delivery-days" class="pts-form-control"/>
+                </div>
+              </div>
+
+              <!-- Categories select -->
+              <div class="pts-form-group row">
+                <label class="pts-col-sm-2 col-form-label" for="input-category">{{ entry_categoryy|default(entry_category) }}</label>
+                <div class="pts-col-sm-10">
+                  <select name="product_category[]" id="input-category" class="form-control">
+                    <option value="">{{ entry_select_category }}</option>
+                    {% for product_category in product_categories %}
+                    <option value="{{ product_category.category_id }}" {% if product_categoryy and product_categoryy == product_category.category_id %}selected="selected"{% endif %}>{{ product_category.name }}</option>
+                    {% endfor %}
+                  </select>
+                  {% if error_category %}<div class="text-danger">{{ error_category }}</div>{% endif %}
+                </div>
+              </div>
+
+              <!-- Status -->
+              <div class="pts-form-group row">
+                <label class="pts-col-sm-2 col-form-label" for="input-status">{{ entry_status }}</label>
+                <div class="pts-col-sm-10">
+                  <select name="status" id="input-status" class="pts-form-control">
+                    {% if status %}
+                    <option value="1" selected="selected">{{ text_enabled }}</option>
+                    <option value="0">{{ text_disabled }}</option>
+                    {% else %}
+                    <option value="1">{{ text_enabled }}</option>
+                    <option value="0" selected="selected">{{ text_disabled }}</option>
+                    {% endif %}
+                  </select>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- Second Tab: SEO (closed) -->
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h4 class="panel-title"><a class="collapsed" data-toggle="collapse" data-parent="#productAccordion" href="#acc-seo">{{ text_seo|default('SEO Meta Descriptions') }}</a></h4>
+          </div>
+          <div id="acc-seo" class="panel-collapse collapse">
+            <div class="panel-body">
+              {% for language in languages %}
+              <div class="pts-form-group row">
+                <label class="pts-col-sm-2 col-form-label" for="input-meta-title{{ language.language_id }}">{{ entry_meta_title }}</label>
+                <div class="pts-col-sm-10">
+                  <input type="text" name="product_description[{{ language.language_id }}][meta_title]" value="{{ product_description[language.language_id] ? product_description[language.language_id].meta_title }}" placeholder="{{ entry_meta_title }}" id="input-meta-title{{ language.language_id }}" class="pts-form-control" />
+                </div>
+              </div>
+
+              <div class="pts-form-group row">
+                <label class="pts-col-sm-2 col-form-label" for="input-meta-description{{ language.language_id }}">{{ entry_meta_description }}</label>
+                <div class="pts-col-sm-10">
+                  {% if gpt_completion_status %}
+                  <div style="margin-bottom: 5px; position: relative;">
+                    <img class="gpt-icon">
+                    <textarea data-lang-id="{{ language.language_id }}" data-control="input-meta-description" class="form-control gpt-call" id="input-query-meta-description-{{ language.language_id }}" placeholder="{{ 'write a meta description' }}" style="height: 45px;padding: 12px 70px 10px 50px;resize: none;overflow: hidden;"></textarea>
+                    <button type="button" data-lang-id="{{ language.language_id }}" data-control="input-query-meta-description" class="btn btn-light btn-enter" id="btn-enter-meta-description-{{ language.language_id }}">{{ 'Enter' }}</button>
+                    <small>{{ text_shift_enter_new_line|default('Press Shift + Enter for New Line') }}</small>
+                    <span class="float-end">
+                      <div class="form-check-inline">
+                        <label class="form-check-label"><input type="radio" class="form-check-input" name="radio-input-meta-description{{ language.language_id }}" value="p">{{ 'Prepend' }}</label>
+                        <label class="form-check-label"><input type="radio" class="form-check-input" name="radio-input-meta-description{{ language.language_id }}" value="a">{{ 'Append' }}</label>
+                        <label class="form-check-label"><input type="radio" class="form-check-input" name="radio-input-meta-description{{ language.language_id }}" checked value="r">{{ 'Replace' }}</label>
+                      </div>
+                    </span>
+                  </div>
+                  <div id="loader1" style="display:none;"></div>
+                  {% endif %}
+                  <textarea name="product_description[{{ language.language_id }}][meta_description]" rows="5" placeholder="{{ entry_meta_description }}" id="input-meta-description{{ language.language_id }}" class="pts-form-control">{{ product_description[language.language_id] ? product_description[language.language_id].meta_description }}</textarea>
+                </div>
+              </div>
+              {% endfor %}
+
+              <!-- SEO URL -->
+              <div class="pts-table-responsive">
+                <table class="pts-table pts-table-bordered pts-table-hover">
+                  <thead>
+                    <tr>
+                      <td class="pts-text-left">{{ entry_store }}</td>
+                      <td class="pts-text-left">{{ entry_keyword }}</td>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for store in stores %}
+                    <tr>
+                      <td class="pts-text-left">{{ store.name }}</td>
+                      <td class="pts-text-left">
+                        {% for language in languages %}
+                        <div class="pts-input-group"><span class="pts-input-group-addon"><img src="catalog/language/{{ language.code }}/{{ language.code }}.png" title="{{ language.name }}" /></span>
+                          <input type="text" name="product_seo_url[{{ store.store_id }}][{{ language.language_id }}]" value="{% if product_seo_url[store.store_id][language.language_id] %}{{ product_seo_url[store.store_id][language.language_id] }}{% endif %}" placeholder="{{ entry_keyword }}" class="pts-form-control" />
+                        </div>
+                        {% if error_keyword[store.store_id][language.language_id] %}<div class="text-danger">{{ error_keyword[store.store_id][language.language_id] }}</div>{% endif %}
+                        {% endfor %}
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Third Tab: Options (closed) -->
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h4 class="panel-title"><a class="collapsed" data-toggle="collapse" data-parent="#productAccordion" href="#acc-options">{{ tab_option|default('Options') }}</a></h4>
+          </div>
+          <div id="acc-options" class="panel-collapse collapse">
+            <div class="panel-body">
+              <div class="pts-row">
+                <div class="pts-col-sm-2">
+                  <ul class="nav nav-pills nav-stacked" id="option">
+                    {% set option_row = 0 %}
+                    {% for product_option in product_options %}
+                    <li><a href="#tab-option{{ option_row }}" data-toggle="tab"><i class="fa fa-minus-circle" onclick="$('a[href=\'#tab-option{{ option_row }}\']').parent().remove(); $('#tab-option{{ option_row }}').remove(); $('#option a:first').tab('show');"></i> {{ product_option.name }}</a></li>
+                    {% set option_row = option_row + 1 %}
+                    {% endfor %}
+                    <li><input type="text" name="option" value="" placeholder="{{ entry_option }}" id="input-option" class="pts-form-control" /></li>
+                  </ul>
+                </div>
+                <div class="pts-col-sm-10">
+                  <div class="pts-tab-content"> {% set option_row = 0 %}{% set option_value_row = 0 %}
+                    {% for product_option in product_options %}
+                    <div class="pts-tab-pane" id="tab-option{{ option_row }}">
+                      <input type="hidden" name="product_option[{{ option_row }}][product_option_id]" value="{{ product_option.product_option_id }}" />
+                      <input type="hidden" name="product_option[{{ option_row }}][name]" value="{{ product_option.name }}" />
+                      <input type="hidden" name="product_option[{{ option_row }}][option_id]" value="{{ product_option.option_id }}" />
+                      <input type="hidden" name="product_option[{{ option_row }}][type]" value="{{ product_option.type }}" />
+                      <div class="pts-form-group row">
+                        <label class="pts-col-sm-2 col-form-label" for="input-required{{ option_row }}">{{ entry_required }}</label>
+                        <div class="pts-col-sm-10">
+                          <select name="product_option[{{ option_row }}][required]" id="input-required{{ option_row }}" class="pts-form-control">
+                            {% if product_option.required %}
+                            <option value="1" selected="selected">{{ text_yes }}</option>
+                            <option value="0">{{ text_no }}</option>
+                            {% else %}
+                            <option value="1">{{ text_yes }}</option>
+                            <option value="0" selected="selected">{{ text_no }}</option>
+                            {% endif %}
+                          </select>
+                        </div>
+                      </div>
+                      {% if product_option.type == 'text' %}
+                      <div class="pts-form-group row">
+                        <label class="pts-col-sm-2 col-form-label" for="input-value{{ option_row }}">{{ entry_option_value }}</label>
+                        <div class="pts-col-sm-10"><input type="text" name="product_option[{{ option_row }}][value]" value="{{ product_option.value }}" placeholder="{{ entry_option_value }}" id="input-value{{ option_row }}" class="pts-form-control" /></div>
+                      </div>
+                      {% endif %}
+                      {% if product_option.type == 'textarea' %}
+                      <div class="pts-form-group row">
+                        <label class="pts-col-sm-2 col-form-label" for="input-value{{ option_row }}">{{ entry_option_value }}</label>
+                        <div class="pts-col-sm-10"><textarea name="product_option[{{ option_row }}][value]" rows="5" placeholder="{{ entry_option_value }}" id="input-value{{ option_row }}" class="pts-form-control">{{ product_option.value }}</textarea></div>
+                      </div>
+                      {% endif %}
+                      {% if product_option.type == 'select' or product_option.type == 'radio' or product_option.type == 'checkbox' or product_option.type == 'image' %}
+                      <div class="pts-table-responsive">
+                        <table id="option-value{{ option_row }}" class="pts-table pts-table-striped pts-table-bordered pts-table-hover">
+                          <thead>
+                            <tr>
+                              <td class="pts-text-left">{{ entry_option_value }}</td>
+                              <td class="pts-text-right">{{ entry_quantity }}</td>
+                              <td class="pts-text-left">{{ entry_subtract }}</td>
+                              <td class="pts-text-right">{{ entry_price }}</td>
+                              <td class="pts-text-right">{{ entry_option_points }}</td>
+                              <td class="pts-text-right">{{ entry_weight }}</td>
+                              <td></td>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {% for product_option_value in product_option.product_option_value %}
+                            <tr id="option-value-pts-row{{ option_value_row }}">
+                              <td class="pts-text-left pts-product-option">
+                                <select name="product_option[{{ option_row }}][product_option_value][{{ option_value_row }}][option_value_id]" class="pts-form-control">
+                                  {% if option_values[product_option.option_id] %}
+                                  {% for option_value in option_values[product_option.option_id] %}
+                                  {% if option_value.option_value_id == product_option_value.option_value_id %}
+                                  <option value="{{ option_value.option_value_id }}" selected="selected">{{ option_value.name }}</option>
+                                  {% else %}
+                                  <option value="{{ option_value.option_value_id }}">{{ option_value.name }}</option>
+                                  {% endif %}
+                                  {% endfor %}
+                                  {% endif %}
+                                </select>
+                                <input type="hidden" name="product_option[{{ option_row }}][product_option_value][{{ option_value_row }}][product_option_value_id]" value="{{ product_option_value.product_option_value_id }}" />
+                              </td>
+                              <td class="pts-text-right pts-product-option"><input type="text" name="product_option[{{ option_row }}][product_option_value][{{ option_value_row }}][quantity]" value="{{ product_option_value.quantity }}" placeholder="{{ entry_quantity }}" class="pts-form-control" /></td>
+                              <td class="pts-text-left pts-product-option">
+                                <select name="product_option[{{ option_row }}][product_option_value][{{ option_value_row }}][subtract]" class="pts-form-control">
+                                  {% if product_option_value.subtract %}
+                                  <option value="1" selected="selected">{{ text_yes }}</option>
+                                  <option value="0">{{ text_no }}</option>
+                                  {% else %}
+                                  <option value="1">{{ text_yes }}</option>
+                                  <option value="0" selected="selected">{{ text_no }}</option>
+                                  {% endif %}
+                                </select>
+                              </td>
+                              <td class="pts-text-right pts-product-option">
+                                <select name="product_option[{{ option_row }}][product_option_value][{{ option_value_row }}][price_prefix]" class="pts-form-control">
+                                  <option value="+" {% if product_option_value.price_prefix == '+' %}selected="selected"{% endif %}>+</option>
+                                  <option value="-" {% if product_option_value.price_prefix == '-' %}selected="selected"{% endif %}>-</option>
+                                </select>
+                                <input type="text" name="product_option[{{ option_row }}][product_option_value][{{ option_value_row }}][price]" value="{{ product_option_value.price }}" placeholder="{{ entry_price }}" class="pts-form-control" />
+                              </td>
+                              <td class="pts-text-right pts-product-option">
+                                <select name="product_option[{{ option_row }}][product_option_value][{{ option_value_row }}][points_prefix]" class="pts-form-control">
+                                  <option value="+" {% if product_option_value.points_prefix == '+' %}selected="selected"{% endif %}>+</option>
+                                  <option value="-" {% if product_option_value.points_prefix == '-' %}selected="selected"{% endif %}>-</option>
+                                </select>
+                                <input type="text" name="product_option[{{ option_row }}][product_option_value][{{ option_value_row }}][points]" value="{{ product_option_value.points }}" placeholder="{{ entry_points }}" class="pts-form-control" />
+                              </td>
+                              <td class="pts-text-right pts-product-option">
+                                <select name="product_option[{{ option_row }}][product_option_value][{{ option_value_row }}][weight_prefix]" class="pts-form-control">
+                                  <option value="+" {% if product_option_value.weight_prefix == '+' %}selected="selected"{% endif %}>+</option>
+                                  <option value="-" {% if product_option_value.weight_prefix == '-' %}selected="selected"{% endif %}>-</option>
+                                </select>
+                                <input type="text" name="product_option[{{ option_row }}][product_option_value][{{ option_value_row }}][weight]" value="{{ product_option_value.weight }}" placeholder="{{ entry_weight }}" class="pts-form-control" />
+                              </td>
+                              <td class="pts-text-right pts-product-option"><button type="button" onclick="$(this).tooltip('destroy');$('#option-value-pts-row{{ option_value_row }}').remove();" data-toggle="tooltip" title="{{ button_remove }}" class="pts-btn pts-btn-danger"><i class="fa fa-minus-circle"></i></button></td>
+                            </tr>
+                            {% set option_value_row = option_value_row + 1 %}
+                            {% endfor %}
+                          </tbody>
+                          <tfoot>
+                            <tr>
+                              <td colspan="5"></td>
+                              <td class="pts-text-left "><button type="button" onclick="addOptionValue('{{ option_row }}');" data-toggle="tooltip" title="{{ button_option_value_add }}" class="btn btn-primary"><i class="fa fa-plus-circle"></i></button></td>
+                            </tr>
+                          </tfoot>
+                        </table>
+                      </div>
+                      <select id="option-values{{ option_row }}" class="ptsc-productl-nodisplay">
+                        {% if option_values[product_option.option_id] %}
+                        {% for option_value in option_values[product_option.option_id] %}
+                        <option value="{{ option_value.option_value_id }}">{{ option_value.name }}</option>
+                        {% endfor %}
+                        {% endif %}
+                      </select>
+                      {% endif %}
+                    </div>
+                    {% set option_row = option_row + 1 %}
+                    {% endfor %}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fourth Tab: Specials and Discounts (closed) -->
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h4 class="panel-title"><a class="collapsed" data-toggle="collapse" data-parent="#productAccordion" href="#acc-specials">{{ 'Specials and Discounts' }}</a></h4>
+          </div>
+          <div id="acc-specials" class="panel-collapse collapse">
+            <div class="panel-body">
+              <!-- Discounts table -->
+              <h4>{{ tab_special }}</h4>
+              <div class="pts-table-responsive">
+                <table id="discount" class="pts-table pts-table-striped pts-table-bordered pts-table-hover">
+                  <thead>
+                    <tr>
+                      <td class="pts-text-left">{{ entry_customer_group }}</td>
+                      <td class="pts-text-right">{{ entry_quantity }}</td>
+                      <td class="pts-text-right">{{ entry_priority }}</td>
+                      <td class="pts-text-right">{{ entry_price }}</td>
+                      <td class="pts-text-left">{{ entry_date_start }}</td>
+                      <td class="pts-text-left">{{ entry_date_end }}</td>
+                      <td></td>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% set discount_row = 0 %}
+                    {% for product_discount in product_discounts %}
+                    <tr id="discount-pts-row{{ discount_row }}">
+                      <td class="pts-text-left">
+                        <select name="product_discount[{{ discount_row }}][customer_group_id]" class="pts-form-control">
+                          {% for customer_group in customer_groups %}
+                          {% if customer_group.customer_group_id == product_discount.customer_group_id %}
+                          <option value="{{ customer_group.customer_group_id }}" selected="selected">{{ customer_group.name }}</option>
+                          {% else %}
+                          <option value="{{ customer_group.customer_group_id }}">{{ customer_group.name }}</option>
+                          {% endif %}
+                          {% endfor %}
+                        </select>
+                      </td>
+                      <td class="pts-text-right"><input type="text" name="product_discount[{{ discount_row }}][quantity]" value="{{ product_discount.quantity }}" placeholder="{{ entry_quantity }}" class="pts-form-control" /></td>
+                      <td class="pts-text-right"><input type="text" name="product_discount[{{ discount_row }}][priority]" value="{{ product_discount.priority }}" placeholder="{{ entry_priority }}" class="pts-form-control" /></td>
+                      <td class="pts-text-right"><input type="text" name="product_discount[{{ discount_row }}][price]" value="{{ product_discount.price }}" placeholder="{{ entry_price }}" class="pts-form-control" /></td>
+                      <td class="pts-text-left ptsc-product-width"><div class="pts-input-group date d-flex d-flex"><input type="text" name="product_discount[{{ discount_row }}][date_start]" value="{{ product_discount.date_start }}" placeholder="{{ entry_date_start }}" data-date-format="YYYY-MM-DD" class="form-control" /><span class="pts-input-group-pts-btn"><button class="pts-btn pts-btn-default" type="button"><i class="fa fa-calendar"></i></button></span></div></td>
+                      <td class="pts-text-left ptsc-product-width"><div class="pts-input-group date d-flex d-flex"><input type="text" name="product_discount[{{ discount_row }}][date_end]" value="{{ product_discount.date_end }}" placeholder="{{ entry_date_end }}" data-date-format="YYYY-MM-DD" class="form-control" /><span class="pts-input-group-pts-btn"><button class="pts-btn pts-btn-default" type="button"><i class="fa fa-calendar"></i></button></span></div></td>
+                      <td class="pts-text-left"><button type="button" onclick="$('#discount-pts-row{{ discount_row }}').remove();" data-toggle="tooltip" title="{{ button_remove }}" class="pts-btn pts-btn-danger"><i class="fa fa-minus-circle"></i></button></td>
+                    </tr>
+                    {% set discount_row = discount_row + 1 %}
+                    {% endfor %}
+                  </tbody>
+                  <tfoot>
+                    <tr>
+                      <td colspan="6"></td>
+                      <td class="pts-text-left"><button id="addDiscountButton" type="button" onclick="addDiscount();" data-toggle="tooltip" title="{{ button_discount_add }}" class="btn btn-primary"><i class="fa fa-plus-circle"></i></button></td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+
+              <!-- Specials table -->
+              <h4 style="margin-top: 20px;">{{ tab_discount }}</h4>
+              <div class="pts-table-responsive">
+                <table id="special" class="pts-table pts-table-striped pts-table-bordered pts-table-hover">
+                  <thead>
+                    <tr>
+                      <td class="pts-text-left">{{ entry_customer_group }}</td>
+                      <td class="pts-text-right">{{ entry_priority }}</td>
+                      <td class="pts-text-right">{{ entry_price }}</td>
+                      <td class="pts-text-left">{{ entry_date_start }}</td>
+                      <td class="pts-text-left">{{ entry_date_end }}</td>
+                      <td></td>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% set special_row = 0 %}
+                    {% for product_special in product_specials %}
+                    <tr id="special-pts-row{{ special_row }}">
+                      <td class="pts-text-left">
+                        <select name="product_special[{{ special_row }}][customer_group_id]" class="pts-form-control">
+                          {% for customer_group in customer_groups %}
+                          {% if customer_group.customer_group_id == product_special.customer_group_id %}
+                          <option value="{{ customer_group.customer_group_id }}" selected="selected">{{ customer_group.name }}</option>
+                          {% else %}
+                          <option value="{{ customer_group.customer_group_id }}">{{ customer_group.name }}</option>
+                          {% endif %}
+                          {% endfor %}
+                        </select>
+                      </td>
+                      <td class="pts-text-right"><input type="text" name="product_special[{{ special_row }}][priority]" value="{{ product_special.priority }}" placeholder="{{ entry_priority }}" class="pts-form-control" /></td>
+                      <td class="pts-text-right"><input type="text" name="product_special[{{ special_row }}][price]" value="{{ product_special.price }}" placeholder="{{ entry_price }}" class="pts-form-control" /></td>
+                      <td class="pts-text-left ptsc-product-width"><div class="pts-input-group date d-flex d-flex"><input type="text" name="product_special[{{ special_row }}][date_start]" value="{{ product_special.date_start }}" placeholder="{{ entry_date_start }}" data-date-format="YYYY-MM-DD" class="form-control" /><span class="pts-input-group-pts-btn"><button class="pts-btn pts-btn-default" type="button"><i class="fa fa-calendar"></i></button></span></div></td>
+                      <td class="pts-text-left ptsc-product-width"><div class="pts-input-group date d-flex d-flex"><input type="text" name="product_special[{{ special_row }}][date_end]" value="{{ product_special.date_end }}" placeholder="{{ entry_date_end }}" data-date-format="YYYY-MM-DD" class="form-control" /><span class="pts-input-group-pts-btn"><button class="pts-btn pts-btn-default" type="button"><i class="fa fa-calendar"></i></button></span></div></td>
+                      <td class="pts-text-left"><button type="button" onclick="$('#special-pts-row{{ special_row }}').remove();" data-toggle="tooltip" title="{{ button_remove }}" class="pts-btn pts-btn-danger"><i class="fa fa-minus-circle"></i></button></td>
+                    </tr>
+                    {% set special_row = special_row + 1 %}
+                    {% endfor %}
+                  </tbody>
+                  <tfoot>
+                    <tr>
+                      <td colspan="5"></td>
+                      <td class="pts-text-left"><button id="addSpecialButtonId" type="button" onclick="addSpecial();" data-toggle="tooltip" title="{{ button_special_add }}" class="btn btn-primary"><i class="fa fa-plus-circle"></i></button></td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fifth Tab: Subscription Plan (closed) -->
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h4 class="panel-title"><a class="collapsed" data-toggle="collapse" data-parent="#productAccordion" href="#acc-subscription">{{ 'Subscription Plan' }}</a></h4>
+          </div>
+          <div id="acc-subscription" class="panel-collapse collapse">
+            <div class="panel-body">
+              {% if module_purpletree_multivendor_subscription_plans is defined and module_purpletree_multivendor_subscription_plans == 1 %}
+              <div class="pts-form-group row">
+                <label class="pts-col-sm-2 pts-control-label" for="input-product_plan_id">{{ text_assign_sub_plan }}</label>
+                <div class="pts-col-sm-10">
+                  <select name="product_plan_id" id="input-product_plan_id" class="pts-form-control">
+                    {% if product_plan_info is not empty %}
+                    {% for plans in product_plan_info %}
+                    <option value="{{ plans.plan_id }}" {% if product_plan_id == plans.plan_id %} selected {% endif %}>{{ plans.plan_name }}</option>
+                    {% endfor %}
+                    {% else %}
+                    <option value="" selected>{{ 'Plan Not Found' }}</option>
+                    {% endif %}
+                  </select>
+                </div>
+              </div>
+              <div class="pts-form-group row">
+                <label class="pts-col-sm-2 pts-control-label" for="input-featured-product-plan-id">{{ entry_subscription_featured_product }}</label>
+                <div class="pts-col-sm-10">
+                  <select name="featured_product_plan_id" id="input-featured-product-plan-id" class="pts-form-control">
+                    <option value="0">{{ text_not_applicable }}</option>
+                    {% if product_plan_info is not empty %}
+                    {% for plans in product_plan_info %}
+                    <option value="{{ plans.plan_id }}" {% if featured_product_plan_id == plans.plan_id %} selected {% endif %}>{{ plans.plan_name }}</option>
+                    {% endfor %}
+                    {% endif %}
+                  </select>
+                  {% if error_featured_product_plan_id is not empty %}<div class="text-danger">{{ error_featured_product_plan_id }}</div>{% endif %}
+                </div>
+              </div>
+              <div class="pts-form-group">
+                <label class="pts-col-sm-2 col-form-label" for="input-category-featured-product-plan-id">{{ entry_subscription_category_featured_product }}</label>
+                <div class="pts-col-sm-10">
+                  <select name="category_featured_product_plan_id" id="input-category-featured-product-plan-id" class="pts-form-control">
+                    {% if product_plan_info is not empty %}
+                    <option value="0">{{ text_not_applicable }}</option>
+                    {% for plans in product_plan_info %}
+                    <option value="{{ plans.plan_id }}" {% if category_featured_product_plan_id == plans.plan_id %} selected {% endif %}>{{ plans.plan_name }}</option>
+                    {% endfor %}
+                    {% endif %}
+                  </select>
+                  {% if error_category_featured_product_plan_id is not empty %}<div class="text-danger">{{ error_category_featured_product_plan_id }}</div>{% endif %}
+                </div>
+              </div>
+              {% else %}
+              {% if module_purpletree_multivendor_seller_featured_products %}
+              <div class="pts-form-group">
+                <label class="pts-col-sm-2 col-form-label" for="input-is_featured">{{ entry_featured_product }}</label>
+                <div class="pts-col-sm-10">
+                  <select name="is_featured" id="input-is_featured" class="pts-form-control">
+                    {% if is_featured %}
+                    <option value="1" selected>{{ text_yes }}</option>
+                    <option value="0">{{ text_no }}</option>
+                    {% else %}
+                    <option value="1">{{ text_yes }}</option>
+                    <option value="0" selected>{{ text_no }}</option>
+                    {% endif %}
+                  </select>
+                </div>
+              </div>
+              {% endif %}
+              {% if module_purpletree_multivendor_seller_category_featured %}
+              <div class="pts-form-group">
+                <label class="pts-col-sm-2 pts-control-label" for="input-is_category_featured">{{ entry_category_featured_product }}</label>
+                <div class="pts-col-sm-10">
+                  <select name="is_category_featured" id="input-is_category_featured" class="pts-form-control">
+                    {% if is_category_featured %}
+                    <option value="1" selected>{{ text_yes }}</option>
+                    <option value="0">{{ text_no }}</option>
+                    {% else %}
+                    <option value="1">{{ text_yes }}</option>
+                    <option value="0" selected>{{ text_no }}</option>
+                    {% endif %}
+                  </select>
+                </div>
+              </div>
+              {% endif %}
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Sixth Tab: Advanced Filters and Attributes (closed) -->
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h4 class="panel-title"><a class="collapsed" data-toggle="collapse" data-parent="#productAccordion" href="#acc-advanced">{{ 'Advanced Filters and Attributes' }}</a></h4>
+          </div>
+          <div id="acc-advanced" class="panel-collapse collapse">
+            <div class="panel-body">
+              <!-- Filters -->
+              <div class="pts-form-group row">
+                <label class="pts-col-sm-2 col-form-label" for="input-filter"><span data-toggle="tooltip" title="{{ help_filter }}">{{ entry_filter }}</span></label>
+                <div class="pts-col-sm-10">
+                  <input type="text" name="filter" value="" placeholder="{{ entry_filter }}" id="input-filter" class="pts-form-control" />
+                  <div id="product-filter" class="well well-sm ptsc-product-heigoflow">
+                    {% for product_filter in product_filters %}
+                    <div id="product-filter{{ product_filter.filter_id }}"><i class="fa fa-minus-circle"></i> {{ product_filter.name }}<input type="hidden" name="product_filter[]" value="{{ product_filter.filter_id }}" /></div>
+                    {% endfor %}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Attributes -->
+              <div class="panel panel-default">
+                <div class="panel-body">
+                  <div class="pts-table-responsive">
+                    <table id="attribute" class="pts-table pts-table-striped pts-table-bordered pts-table-hover">
+                      <thead>
+                        <tr>
+                          <td class="pts-text-left">{{ entry_attribute }}</td>
+                          <td class="pts-text-left">{{ entry_text }}</td>
+                          <td></td>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% set attribute_row = 0 %}
+                        {% for product_attribute in product_attributes %}
+                        <tr id="attribute-pts-row{{ attribute_row }}">
+                          <td class="pts-text-left ptsc-product-widthh"><input type="text" name="product_attribute[{{ attribute_row }}][name]" value="{{ product_attribute.name }}" placeholder="{{ entry_attribute }}" class="pts-form-control" /><input type="hidden" name="product_attribute[{{ attribute_row }}][attribute_id]" value="{{ product_attribute.attribute_id }}" /></td>
+                          <td class="pts-text-left">{% for language in languages %}<div class="pts-input-group"><span class="pts-input-group-addon"><img src="catalog/language/{{ language.code }}/{{ language.code }}.png" title="{{ language.name }}" /></span><textarea name="product_attribute[{{ attribute_row }}][product_attribute_description][{{ language.language_id }}][text]" rows="5" placeholder="{{ entry_text }}" class="pts-form-control">{{ product_attribute.product_attribute_description[language.language_id] ? product_attribute.product_attribute_description[language.language_id].text }}</textarea></div>{% endfor %}</td>
+                          <td class="pts-text-right"><button type="button" onclick="$('#attribute-pts-row{{ attribute_row }}').remove();" data-toggle="tooltip" title="{{ button_remove }}" class="pts-btn pts-btn-danger"><i class="fa fa-minus-circle"></i></button></td>
+                        </tr>
+                        {% set attribute_row = attribute_row + 1 %}
+                        {% endfor %}
+                      </tbody>
+                      <tfoot>
+                        <tr>
+                          <td colspan="2"></td>
+                          <td class="pts-text-right"><button type="button" id="addAttributeButton" onclick="addAttribute();" data-toggle="tooltip" title="{{ button_attribute_add }}" class="btn btn-primary"><i class="fa fa-plus-circle"></i></button></td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </form>
+
+    <!-- Sticky bottom save bar -->
+    <div class="sticky-save-bar">
+      <div class="container-fluid">
+        <button type="button" id="stickySaveBtn" class="pts-btn pts-btn-primary">{{ button_continue }}</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script type="text/javascript">
+  (function(){
+    $('#language a:first').tab('show');
+    $('#option a:first').tab('show');
+    $('#stickySaveBtn').on('click', function(){
+      $('#form-product').trigger('submit');
+    });
+  })();
+</script>
+
+<!-- Minimal helpers recreated for dynamic rows -->
+<script type="text/javascript"><!--
+  var image_row = {{ image_row|default(0) }};
+  function addImage() {
+    html  = '<tr id="image-pts-row' + image_row + '">';
+    html += '  <td class="pts-text-left"><a href="" id="thumb-image' + image_row + '"data-toggle="image" class="img-thumbnail"><img src="{{ placeholder }}" alt="" title="" data-placeholder="{{ placeholder }}" /></a><input type="hidden" name="product_image[' + image_row + '][image]" value="" id="input-image' + image_row + '" /></td>';
+    html += '  <td class="pts-text-right"><input type="text" name="product_image[' + image_row + '][sort_order]" value="" placeholder="{{ entry_sort_order }}" class="pts-form-control" /></td>';
+    html += '  <td class="pts-text-left"><button type="button" onclick="$(this).tooltip(\'destroy\');$(\'#image-pts-row' + image_row + '\').remove();" data-toggle="tooltip" title="{{ button_remove }}" class="pts-btn pts-btn-danger"><i class="fa fa-minus-circle"></i></button></td>';
+    html += '</tr>';
+    $('#images tbody').append(html);
+    image_row++;
+  }
+//--></script>
+
+<script type="text/javascript"><!--
+  var attribute_row = {{ attribute_row|default(0) }};
+  function addAttribute() {
+    html  = '<tr id="attribute-pts-row' + attribute_row + '">';
+    html += '  <td class="pts-text-left ptsc-product-width"><input type="text" name="product_attribute[' + attribute_row + '][name]" value="" placeholder="{{ entry_attribute }}" class="pts-form-control" /><input type="hidden" name="product_attribute[' + attribute_row + '][attribute_id]" value="" /></td>';
+    html += '  <td class="pts-text-left">';
+    {% for language in languages %}
+    html += '    <div class="pts-input-group"><span class="pts-input-group-addon"><img src="catalog/language/{{ language.code }}/{{ language.code }}.png" title="{{ language.name }}" /></span>';
+    html += '      <textarea name="product_attribute[' + attribute_row + '][product_attribute_description][{{ language.language_id }}][text]" rows="5" placeholder="{{ entry_text }}" class="pts-form-control"></textarea>';
+    html += '    </div>';
+    {% endfor %}
+    html += '  </td>';
+    html += '  <td class="pts-text-right"><button type="button" onclick="$(this).tooltip(\'destroy\');$(\'#attribute-pts-row' + attribute_row + '\').remove();" data-toggle="tooltip" title="{{ button_remove }}" class="pts-btn pts-btn-danger"><i class="fa fa-minus-circle"></i></button></td>';
+    html += '</tr>';
+    $('#attribute tbody').append(html);
+    attribute_row++;
+  }
+//--></script>
+
+<script type="text/javascript"><!--
+  var discount_row = {{ discount_row|default(0) }};
+  function addDiscount() {
+    html  = '<tr id="discount-pts-row' + discount_row + '">';
+    html += '  <td class="pts-text-left"><select name="product_discount[' + discount_row + '][customer_group_id]" class="pts-form-control">';
+    {% for customer_group in customer_groups %}
+    html += '    <option value="{{ customer_group.customer_group_id }}">{{ customer_group.name }}</option>';
+    {% endfor %}
+    html += '  </select></td>';
+    html += '  <td class="pts-text-right"><input type="text" name="product_discount[' + discount_row + '][quantity]" value="" placeholder="{{ entry_quantity }}" class="pts-form-control" /></td>';
+    html += '  <td class="pts-text-right"><input type="text" name="product_discount[' + discount_row + '][priority]" value="" placeholder="{{ entry_priority }}" class="pts-form-control" /></td>';
+    html += '  <td class="pts-text-right"><input type="text" name="product_discount[' + discount_row + '][price]" value="" placeholder="{{ entry_price }}" class="pts-form-control" /></td>';
+    html += '  <td class="pts-text-left ptsc-product-width"><div class="pts-input-group date d-flex d-flex"><input type="text" name="product_discount[' + discount_row + '][date_start]" value="" placeholder="{{ entry_date_start }}" data-date-format="YYYY-MM-DD" class="form-control" /><span class="pts-input-group-pts-btn"><button class="pts-btn pts-btn-default" type="button"><i class="fa fa-calendar"></i></button></span></div></td>';
+    html += '  <td class="pts-text-left ptsc-product-width"><div class="pts-input-group date d-flex d-flex"><input type="text" name="product_discount[' + discount_row + '][date_end]" value="" placeholder="{{ entry_date_end }}" data-date-format="YYYY-MM-DD" class="form-control" /><span class="pts-input-group-pts-btn"><button class="pts-btn pts-btn-default" type="button"><i class="fa fa-calendar"></i></button></span></div></td>';
+    html += '  <td class="pts-text-left"><button type="button" onclick="$(this).tooltip(\'destroy\');$(\'#discount-pts-row' + discount_row + '\').remove();" data-toggle="tooltip" title="{{ button_remove }}" class="pts-btn pts-btn-danger"><i class="fa fa-minus-circle"></i></button></td>';
+    html += '</tr>';
+    $('#discount tbody').append(html);
+    discount_row++;
+  }
+//--></script>
+
+<script type="text/javascript"><!--
+  var special_row = {{ special_row|default(0) }};
+  function addSpecial() {
+    html  = '<tr id="special-pts-row' + special_row + '">';
+    html += '  <td class="pts-text-left"><select name="product_special[' + special_row + '][customer_group_id]" class="pts-form-control">';
+    {% for customer_group in customer_groups %}
+    html += '    <option value="{{ customer_group.customer_group_id }}">{{ customer_group.name }}</option>';
+    {% endfor %}
+    html += '  </select></td>';
+    html += '  <td class="pts-text-right"><input type="text" name="product_special[' + special_row + '][priority]" value="" placeholder="{{ entry_priority }}" class="pts-form-control" /></td>';
+    html += '  <td class="pts-text-right"><input type="text" name="product_special[' + special_row + '][price]" value="" placeholder="{{ entry_price }}" class="pts-form-control" /></td>';
+    html += '  <td class="pts-text-left ptsc-product-width"><div class="pts-input-group date d-flex d-flex"><input type="text" name="product_special[' + special_row + '][date_start]" value="" placeholder="{{ entry_date_start }}" data-date-format="YYYY-MM-DD" class="form-control" /><span class="pts-input-group-pts-btn"><button class="pts-btn pts-btn-default" type="button"><i class="fa fa-calendar"></i></button></span></div></td>';
+    html += '  <td class="pts-text-left ptsc-product-width"><div class="pts-input-group date d-flex d-flex"><input type="text" name="product_special[' + special_row + '][date_end]" value="" placeholder="{{ entry_date_end }}" data-date-format="YYYY-MM-DD" class="form-control" /><span class="pts-input-group-pts-btn"><button class="pts-btn pts-btn-default" type="button"><i class="fa fa-calendar"></i></button></span></div></td>';
+    html += '  <td class="pts-text-left"><button type="button" onclick="$(this).tooltip(\'destroy\');$(\'#special-pts-row' + special_row + '\').remove();" data-toggle="tooltip" title="{{ button_remove }}" class="pts-btn pts-btn-danger"><i class="fa fa-minus-circle"></i></button></td>';
+    html += '</tr>';
+    $('#special tbody').append(html);
+    special_row++;
+  }
+//--></script>
+
+{% if gpt_completion_status %}
+<style>
+  .btn-enter { position: absolute; right: 19px; top: 4px; }
+  .gpt-icon { position: absolute; height: 37px; top: 4px; margin-left: 4px; }
+</style>
+<script>
+  function getCaret(el) { if (el.selectionStart) { return el.selectionStart; } else if (document.selection) { el.focus(); var r = document.selection.createRange(); if (r == null) return 0; var re = el.createTextRange(), rc = re.duplicate(); re.moveToBookmark(r.getBookmark()); rc.setEndPoint('EndToStart', re); return rc.text.length; } return 0; }
+  $('.gpt-call').keyup(function (event) {
+    if (event.keyCode == 13) {
+      if (event.shiftKey) { return 0; }
+      var content = this.value;
+      var start = getCaret(this);
+      if (content.indexOf('\n', start) === -1) {
+        let query = $(this).val();
+        if (query.trim() != '') { let control_id = $(this).data('control') + $(this).data('lang-id'); gpt_call(query.trim(), control_id); }
+      }
+    }
+  });
+  $('.btn-enter').click(function (){ let text_id = $(this).data('control') + '-' + $(this).data('lang-id'); let query = $('#' + text_id).val(); if(query.trim() != '') { let control_id = $('#' + text_id).data('control') + $('#' + text_id).data('lang-id'); gpt_call(query.trim(), control_id); } });
+  function gpt_call(query, control_id) {
+    $('.gpt-call').prop('disabled', true);
+    $('.btn-enter').prop('disabled', true);
+    $.ajax({ url: 'index.php?route=extension/module/gpt_completion/gpt_call&user_token={{ user_token }}', dataType: 'json', method: 'post', data: {query: query}, beforeSend: function () { $('#loader1').show(); }, success: function (json) {
+      let action = $('input[name="radio-' + control_id + '"]:checked').val();
+      let pre_text = $('#' + control_id).val();
+      if(!control_id.includes('meta')){
+        let text; let new_text = json.trim().replace(/\r\n|\r|\n/g,"<br />");
+        if(action == 'p') text = new_text + "\n" + pre_text; else if(action == 'a') text = pre_text + "\n" + new_text; else text = "<p>" + new_text + "</p>";
+        $('#' + control_id).summernote('code',text);
+      } else {
+        let new_text = json.trim(); if(action == 'p') $('#' + control_id).val(new_text + "\n" + pre_text); else if(action == 'a') $('#' + control_id).val(pre_text + "\n" + new_text); else $('#' + control_id).val(new_text);
+      }
+    }, complete: function () { $('.gpt-call').prop('disabled', false); $('.btn-enter').prop('disabled', false);  $("#loader1").hide(); } });
+  }
+</script>
+{% endif %}
+
+<style>
+  .sticky-save-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 1040; background: #fff; border-top: 1px solid #ddd; padding: 10px; }
+</style>
+
+{{ footer }}
