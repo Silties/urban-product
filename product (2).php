@@ -240,6 +240,7 @@ class ControllerProductProduct extends Controller {
 			$this->document->addScript('catalog/view/javascript/jquery/datetimepicker/moment/moment-with-locales.min.js');
 			$this->document->addScript('catalog/view/javascript/jquery/datetimepicker/bootstrap-datetimepicker.min.js');
 			$this->document->addStyle('catalog/view/javascript/jquery/datetimepicker/bootstrap-datetimepicker.min.css');
+            $this->document->addScript('catalog/view/javascript/product-lazy.js');
 
 			$data['heading_title'] = $product_info['name'];
 
@@ -275,7 +276,10 @@ class ControllerProductProduct extends Controller {
 			}
 
 			if ($product_info['image']) {
-				$data['thumb'] = $this->model_tool_image->resize($product_info['image'], $this->config->get('theme_' . $this->config->get('config_theme') . '_image_thumb_width'), $this->config->get('theme_' . $this->config->get('config_theme') . '_image_thumb_height'));
+				$thumb_w = (int)$this->config->get('theme_' . $this->config->get('config_theme') . '_image_thumb_width');
+				$thumb_h = (int)$this->config->get('theme_' . $this->config->get('config_theme') . '_image_thumb_height');
+				$data['thumb'] = $this->model_tool_image->resize($product_info['image'], $thumb_w, $thumb_h);
+				$this->buildSrcsetMap($data['thumb'], $product_info['image'], $thumb_w, $thumb_h, 'main');
 			} else {
 				$data['thumb'] = '';
 			}
@@ -285,10 +289,17 @@ class ControllerProductProduct extends Controller {
 			$results = $this->model_catalog_product->getProductImages($this->request->get['product_id']);
 
 			foreach ($results as $result) {
+				$add_w = (int)$this->config->get('theme_' . $this->config->get('config_theme') . '_image_additional_width');
+				$add_h = (int)$this->config->get('theme_' . $this->config->get('config_theme') . '_image_additional_height');
+				$popup_w = (int)$this->config->get('theme_' . $this->config->get('config_theme') . '_image_popup_width');
+				$popup_h = (int)$this->config->get('theme_' . $this->config->get('config_theme') . '_image_popup_height');
+				$popup = $this->model_tool_image->resize($result['image'], $popup_w, $popup_h);
+				$thumb = $this->model_tool_image->resize($result['image'], $add_w, $add_h);
 				$data['images'][] = array(
-					'popup' => $this->model_tool_image->resize($result['image'], $this->config->get('theme_' . $this->config->get('config_theme') . '_image_popup_width'), $this->config->get('theme_' . $this->config->get('config_theme') . '_image_popup_height')),
-					'thumb' => $this->model_tool_image->resize($result['image'], $this->config->get('theme_' . $this->config->get('config_theme') . '_image_additional_width'), $this->config->get('theme_' . $this->config->get('config_theme') . '_image_additional_height'))
+					'popup' => $popup,
+					'thumb' => $thumb
 				);
+				$this->buildSrcsetMap($thumb, $result['image'], $add_w, $add_h, 'additional');
 			}
 
 			if ($this->customer->isLogged() || !$this->config->get('config_customer_price')) {
@@ -397,7 +408,10 @@ class ControllerProductProduct extends Controller {
 
 			foreach ($results as $result) {
 				if ($result['image']) {
-					$image = $this->model_tool_image->resize($result['image'], $this->config->get('theme_' . $this->config->get('config_theme') . '_image_related_width'), $this->config->get('theme_' . $this->config->get('config_theme') . '_image_related_height'));
+					$rel_w = (int)$this->config->get('theme_' . $this->config->get('config_theme') . '_image_related_width');
+					$rel_h = (int)$this->config->get('theme_' . $this->config->get('config_theme') . '_image_related_height');
+					$image = $this->model_tool_image->resize($result['image'], $rel_w, $rel_h);
+					$this->buildSrcsetMap($image, $result['image'], $rel_w, $rel_h, 'related');
 				} else {
 					$image = $this->model_tool_image->resize('placeholder.png', $this->config->get('theme_' . $this->config->get('config_theme') . '_image_related_width'), $this->config->get('theme_' . $this->config->get('config_theme') . '_image_related_height'));
 				}
@@ -814,11 +828,15 @@ if ($product_info) {
     // ...build $data...
 
     if (isset($this->request->get['preview']) && (int)$this->request->get['preview'] === 1) {
-        $this->response->setOutput($this->load->view('product/new_template', $data));
+        $output = $this->load->view('product/new_template', $data);
+        $output = $this->optimizeProductHtmlImages($output);
+        $this->response->setOutput($output);
         return;
     }
 
-    $this->response->setOutput($this->load->view('product/product', $data));
+    $output = $this->load->view('product/product', $data);
+    $output = $this->optimizeProductHtmlImages($output);
+    $this->response->setOutput($output);
     return;
 } else {
     // 404 not found block...
@@ -976,6 +994,92 @@ if ($product_info) {
 
 		$this->response->addHeader('Content-Type: application/json');
 		$this->response->setOutput(json_encode($json));
+	}
+
+	private function optimizeProductHtmlImages($html) {
+		if (!is_string($html) || $html === '') {
+			return $html;
+		}
+
+		$srcsetMap = isset($this->registry['__srcset']) ? $this->registry['__srcset'] : array();
+		$count = 0;
+		$callback = function ($matches) use (&$count, $srcsetMap) {
+			$img = $matches[0];
+			$count++;
+
+			// Remove existing attributes to avoid duplicates
+			$img = preg_replace('/\s+(loading|decoding|fetchpriority|srcset|sizes|width|height)="[^"]*"/i', '', $img);
+
+			$src = '';
+			if (preg_match('/\s+src="([^"]+)"/i', $img, $m)) {
+				$src = $m[1];
+			}
+
+			if ($count === 1) {
+				// Hero image: keep eager for LCP
+				$attrs = ' loading="eager" fetchpriority="high" decoding="async"';
+			} else {
+				// Other images: lazy
+				$attrs = ' loading="lazy" fetchpriority="low" decoding="async"';
+			}
+
+			// If we have a srcset entry, add responsive attributes and intrinsic size
+			if ($src && isset($srcsetMap[$src])) {
+				$meta = $srcsetMap[$src];
+				if (!empty($meta['srcset'])) {
+					$attrs .= ' srcset="' . htmlspecialchars($meta['srcset'], ENT_QUOTES, 'UTF-8') . '"';
+				}
+				if (!empty($meta['sizes'])) {
+					$attrs .= ' sizes="' . htmlspecialchars($meta['sizes'], ENT_QUOTES, 'UTF-8') . '"';
+				}
+				if (!empty($meta['width']) && !empty($meta['height'])) {
+					$attrs .= ' width="' . (int)$meta['width'] . '" height="' . (int)$meta['height'] . '"';
+				}
+			}
+
+			// Inject attributes before the closing bracket
+			$img = preg_replace('/>$/', $attrs . '>', $img);
+			return $img;
+		};
+
+		$html = preg_replace_callback('/<img\b[^>]*>/i', $callback, $html);
+
+		// Defer heavy scripts if present
+		$scriptCallback = function ($m) {
+			$tag = $m[0];
+			if (stripos($tag, ' defer') !== false) return $tag;
+			return rtrim(substr($tag, 0, -1)) . ' defer>';
+		};
+		$html = preg_replace_callback('/<script[^>]+src="[^"]*(magnific|datetimepicker|moment)[^"]*"[^>]*>/i', $scriptCallback, $html);
+
+		return $html;
+	}
+
+	private function buildSrcsetMap($resizedUrl, $originalImagePath, $baseWidth, $baseHeight, $bucket) {
+		// Build a simple srcset mapping in the document registry so the template can render it if used
+		// This is non-breaking if not consumed by the view.
+		try {
+			if (!isset($this->registry['__srcset'])) {
+				$this->registry['__srcset'] = array();
+			}
+			$scales = array(1, 1.5, 2);
+			$srcset = array();
+			foreach ($scales as $scale) {
+				$w = (int)round($baseWidth * $scale);
+				$h = (int)round($baseHeight * $scale);
+				$src = $this->model_tool_image->resize($originalImagePath, $w, $h);
+				$srcset[] = $src . ' ' . $w . 'w';
+			}
+			$this->registry['__srcset'][$resizedUrl] = array(
+				'srcset' => implode(', ', $srcset),
+				'sizes' => '(max-width: 768px) 90vw, (max-width: 1200px) 50vw, 600px',
+				'bucket' => $bucket,
+				'width' => (int)$baseWidth,
+				'height' => (int)$baseHeight
+			);
+		} catch (\Exception $e) {
+			// ignore
+		}
 	}
 
 	public function getRecurringDescription() {
